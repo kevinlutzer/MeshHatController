@@ -21,6 +21,7 @@ use crate::meshcore_proto::{
 };
 
 /// Decode a 64-character hex string into a 32-byte array.
+#[allow(clippy::result_large_err)]
 fn decode_pubkey(hex_str: &str) -> Result<[u8; 32], Status> {
     let bytes = Vec::<u8>::from_hex(hex_str)
         .map_err(|e| Status::invalid_argument(format!("invalid hex pubkey: {e}")))?;
