@@ -1,0 +1,28 @@
+name: meshhat-controller
+base: core26
+version: "0.1.0"
+summary: gRPC server bridging MeshCore radio nodes over serial
+description: |
+  Exposes a gRPC interface (SendMessage, ReceiveMessage, Reset,
+  CreateContact, SearchContact, DeleteContact, Healthcheck) backed by
+  a MeshCore companion radio node connected via serial port.
+
+grade: stable
+confinement: classic
+
+apps:
+  meshhat-controller:
+    command: bin/meshhat-controller
+    daemon: simple
+    restart-condition: on-failure
+
+parts:
+  meshcore-grpc:
+    plugin: rust
+    source: .
+    build-packages:
+      - pkg-config
+      - libssl-dev
+      - protobuf-compiler
+    stage-packages:
+      - libssl3

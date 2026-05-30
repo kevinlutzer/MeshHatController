@@ -1,0 +1,98 @@
+syntax = "proto3";
+package meshcore;
+
+service MeshCoreService {
+  rpc SendMessage    (SendMessageRequest)    returns (SendMessageResponse);
+  rpc ReceiveMessage (ReceiveMessageRequest) returns (ReceiveMessageResponse);
+  rpc Reset          (ResetRequest)          returns (ResetResponse);
+  rpc CreateContact  (CreateContactRequest)  returns (CreateContactResponse);
+  rpc SearchContact  (SearchContactRequest)  returns (SearchContactResponse);
+  rpc DeleteContact  (DeleteContactRequest)  returns (DeleteContactResponse);
+  rpc Healthcheck    (HealthcheckRequest)    returns (HealthcheckResponse);
+}
+
+// --- SendMessage ---
+// Destination is either a contact (full 64-char hex pubkey) or a channel index.
+message SendMessageRequest {
+  oneof destination {
+    string contact_pubkey_hex = 1;
+    uint32 channel_index      = 2;
+  }
+  string text      = 3;
+  optional uint32 timestamp = 4; // unix seconds; 0 = let server use current time
+}
+message SendMessageResponse {
+  bool   success = 1;
+  string error   = 2;
+}
+
+// --- ReceiveMessage ---
+// Polls the device for the next queued message (wraps get_msg).
+message ReceiveMessageRequest {}
+message ReceiveMessageResponse {
+  bool   has_message    = 1;
+  bool   is_channel_msg = 2; // true = ChannelMessage, false = ContactMessage
+  string sender_hex     = 3; // 6-byte prefix hex for ContactMessage; empty for channel
+  uint32 channel_index  = 4; // populated for ChannelMessage
+  string text           = 5;
+}
+
+// --- Reset ---
+// Drives a GPIO pin LOW for hold_ms milliseconds then releases it HIGH.
+// Intended to hard-reset the attached MeshCore radio module.
+message ResetRequest {}
+message ResetResponse {}
+
+// --- CreateContact ---
+// Wraps CommandHandler::add_contact.
+message CreateContactRequest {
+  string public_key_hex = 1; // 64-char hex = 32 bytes
+  string name           = 2;
+  uint32 contact_type   = 3;
+  uint32 flags          = 4;
+  double latitude       = 5; // decimal degrees
+  double longitude      = 6; // decimal degrees
+}
+message CreateContactResponse {
+  bool   success = 1;
+  string error   = 2;
+}
+
+// --- SearchContact ---
+// Fetches all contacts and filters client-side by name or pubkey prefix.
+message SearchContactRequest {
+  string query = 1; // matches adv_name (case-insensitive) or pubkey_hex prefix
+}
+message SearchContactResponse {
+  repeated ContactInfo contacts = 1;
+}
+message ContactInfo {
+  string public_key_hex               = 1;
+  string prefix_hex                   = 2;
+  string name                         = 3;
+  uint32 contact_type                 = 4;
+  uint32 flags                        = 5;
+  double latitude                     = 6;
+  double longitude                    = 7;
+  uint32 last_advert                  = 8;
+  uint32 last_modification_timestamp  = 9;
+}
+
+// --- DeleteContact ---
+// Wraps CommandHandler::remove_contact by full 64-char hex pubkey.
+message DeleteContactRequest {
+  string public_key_hex = 1;
+}
+message DeleteContactResponse {
+  bool   success = 1;
+  string error   = 2;
+}
+
+// --- Healthcheck ---
+// Calls send_appstart() and returns the device name on success.
+message HealthcheckRequest {}
+message HealthcheckResponse {
+  bool   ok          = 1;
+  string device_name = 2;
+  string error       = 3;
+}
