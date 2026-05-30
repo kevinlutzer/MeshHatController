@@ -25,6 +25,5 @@ parts:
       - libssl-dev
       - protobuf-compiler
       - libdbus-1-dev
-      - protobuf-compiler
     stage-packages:
       - libssl3
