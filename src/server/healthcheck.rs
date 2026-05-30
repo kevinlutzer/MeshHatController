@@ -1,4 +1,3 @@
-
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
@@ -7,9 +6,7 @@ use tracing::{error, info};
 
 use meshcore_rs::commands::CommandHandler;
 
-use crate::meshcore_proto::{
-    HealthcheckResponse
-};
+use crate::meshcore_proto::HealthcheckResponse;
 
 pub async fn healthcheck(
     command: &Arc<Mutex<CommandHandler>>,
