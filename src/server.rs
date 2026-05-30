@@ -9,6 +9,8 @@ use meshcore_rs::{
     events::{Contact, EventPayload, EventType},
 };
 
+use hex::FromHex;
+
 use crate::meshcore_proto::{
     ContactInfo, CreateContactRequest, CreateContactResponse, DeleteContactRequest,
     DeleteContactResponse, HealthcheckRequest, HealthcheckResponse, ReceiveMessageRequest,
@@ -22,6 +24,7 @@ use crate::meshcore_proto::{
 fn decode_pubkey(hex_str: &str) -> Result<[u8; 32], Status> {
     let bytes = Vec::<u8>::from_hex(hex_str)
         .map_err(|e| Status::invalid_argument(format!("invalid hex pubkey: {e}")))?;
+
     bytes
         .try_into()
         .map_err(|_| Status::invalid_argument("pubkey must be exactly 32 bytes (64 hex chars)"))
@@ -33,7 +36,9 @@ pub struct MeshCoreServiceImpl {
 
 impl MeshCoreServiceImpl {
     pub fn new(commands: &Arc<Mutex<CommandHandler>>) -> Self {
-        Self { commands: commands.clone() }
+        Self {
+            commands: commands.clone(),
+        }
     }
 }
 
@@ -50,17 +55,15 @@ impl MeshCoreService for MeshCoreServiceImpl {
 
         let cmd = self.commands.lock().await;
         let result = match req.destination {
-            Some(ProtoDestination::ContactPubkeyHex(ref hex)) => {
-                cmd.send_msg(Destination::Hex(hex.to_string()), text, timestamp)
-                    .await
-                    .map(|_| ())
-                    .map_err(|e| e.to_string())
-            }
-            Some(ProtoDestination::ChannelIndex(idx)) => {
-                cmd.send_channel_msg(idx as u8, text, timestamp)
-                    .await
-                    .map_err(|e| e.to_string())
-            }
+            Some(ProtoDestination::ContactPubkeyHex(ref hex)) => cmd
+                .send_msg(Destination::Hex(hex.to_string()), text, timestamp)
+                .await
+                .map(|_| ())
+                .map_err(|e| e.to_string()),
+            Some(ProtoDestination::ChannelIndex(idx)) => cmd
+                .send_channel_msg(idx as u8, text, timestamp)
+                .await
+                .map_err(|e| e.to_string()),
             None => {
                 return Err(Status::invalid_argument(
                     "destination must be set (contact_pubkey_hex or channel_index)",
@@ -89,8 +92,7 @@ impl MeshCoreService for MeshCoreServiceImpl {
         &self,
         _request: Request<ReceiveMessageRequest>,
     ) -> Result<Response<ReceiveMessageResponse>, Status> {
-        let mut cmd = self.commands.lock().await;
-
+        let cmd = self.commands.lock().await;
         let event_opt = cmd
             .get_msg()
             .await
@@ -105,30 +107,28 @@ impl MeshCoreService for MeshCoreServiceImpl {
 
         let resp = match event.event_type {
             EventType::ContactMsgRecv => {
-                if let Some(EventPayload::ContactMessage(msg)) = event.payload {
-                    info!(sender = %hex::encode(msg.sender_prefix), "ReceiveMessage ← contact");
+                if let EventPayload::ContactMessage(msg) = event.payload {
+                    info!(sender = %hex::encode(msg.sender_prefix), "Received contact messasge");
                     ReceiveMessageResponse {
                         has_message: true,
                         is_channel_msg: false,
                         sender_hex: hex::encode(msg.sender_prefix),
                         channel_index: 0,
                         text: msg.text,
-                        timestamp: msg.timestamp,
                     }
                 } else {
                     return Err(Status::internal("ContactMsgRecv event missing payload"));
                 }
             }
             EventType::ChannelMsgRecv => {
-                if let Some(EventPayload::ChannelMessage(msg)) = event.payload {
-                    info!(channel = msg.channel_idx, "ReceiveMessage ← channel");
+                if let EventPayload::ChannelMessage(msg) = event.payload {
+                    info!(channel = msg.channel_idx, "Received channel messasge");
                     ReceiveMessageResponse {
                         has_message: true,
                         is_channel_msg: true,
                         sender_hex: String::new(),
                         channel_index: msg.channel_idx as u32,
                         text: msg.text,
-                        timestamp: msg.timestamp,
                     }
                 } else {
                     return Err(Status::internal("ChannelMsgRecv event missing payload"));
@@ -144,10 +144,7 @@ impl MeshCoreService for MeshCoreServiceImpl {
         Ok(Response::new(resp))
     }
 
-    async fn reset(
-        &self,
-        _: Request<ResetRequest>,
-    ) -> Result<Response<ResetResponse>, Status> {
+    async fn reset(&self, _: Request<ResetRequest>) -> Result<Response<ResetResponse>, Status> {
         Ok(Response::new(ResetResponse {}))
     }
 
@@ -177,7 +174,7 @@ impl MeshCoreService for MeshCoreServiceImpl {
             last_modification_timestamp: 0,
         };
 
-        let mut cmd = self.commands.lock().await;
+        let cmd = self.commands.lock().await;
         match cmd.add_contact(&contact).await {
             Ok(()) => Ok(Response::new(CreateContactResponse {
                 success: true,
@@ -200,7 +197,7 @@ impl MeshCoreService for MeshCoreServiceImpl {
         let query = request.into_inner().query.to_lowercase();
         info!(query = %query, "SearchContact");
 
-        let mut cmd = self.commands.lock().await;
+        let cmd = self.commands.lock().await;
         let all_contacts = cmd
             .get_contacts(0)
             .await
@@ -240,7 +237,10 @@ impl MeshCoreService for MeshCoreServiceImpl {
         info!(pubkey = %req.public_key_hex, "DeleteContact");
 
         let cmd = self.commands.lock().await;
-        match cmd.remove_contact(Destination::Hex(req.public_key_hex)).await {
+        match cmd
+            .remove_contact(Destination::Hex(req.public_key_hex))
+            .await
+        {
             Ok(()) => Ok(Response::new(DeleteContactResponse {
                 success: true,
                 error: String::new(),

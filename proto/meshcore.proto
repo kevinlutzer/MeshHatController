@@ -35,7 +35,6 @@ message ReceiveMessageResponse {
   string sender_hex     = 3; // 6-byte prefix hex for ContactMessage; empty for channel
   uint32 channel_index  = 4; // populated for ChannelMessage
   string text           = 5;
-  uint32 timestamp      = 6;
 }
 
 // --- Reset ---

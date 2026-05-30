@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS: &str =
 /// - For a snap this is the $SNAP_COMMON
 /// - For local development or running the binary directly, this is the current working directory.
 fn get_settings_dir() -> PathBuf {
-    var("SNAP_COMMON")
+    var(SNAP_COMMON)
         .map(PathBuf::from)
         .unwrap_or_else(|_| current_dir().expect("Failed to get the current directory"))
 }

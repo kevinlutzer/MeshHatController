@@ -9,7 +9,9 @@ use tracing::{error, info, instrument::WithSubscriber};
 
 use meshcore_rs::MeshCore;
 
-use app_env::{load_or_create_env_file, get_baud_rate, get_grpc_listen_addr, get_serial_port, setup_tracing};
+use app_env::{
+    get_baud_rate, get_grpc_listen_addr, get_serial_port, load_or_create_env_file, setup_tracing,
+};
 use meshcore_proto::mesh_core_service_server::MeshCoreServiceServer;
 use server::MeshCoreServiceImpl;
 
@@ -33,10 +35,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         e
     })?;
 
-    let commands= meshcore.commands();
+    let commands = meshcore.commands();
 
     // Verify connectivity and log the device name.
-    let self_info = commands.clone()
+    let self_info = commands
+        .clone()
         .lock()
         .await
         .send_appstart()
