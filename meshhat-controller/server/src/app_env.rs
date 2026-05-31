@@ -11,8 +11,7 @@ const ENV_FILE_NAME: &str = "settings.ini";
 /// Snap specific directory that the service will have access too
 const SNAP_COMMON: &str = "SNAP_COMMON";
 /// Default environment settings. These can be manipulated by editing the settings.ini
-const DEFAULT_SETTINGS: &str =
-    "MESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\n";
+const DEFAULT_SETTINGS: &str = "MESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\n";
 
 /// Gets the settings directory for the service.
 /// - For a snap this is the $SNAP_COMMON

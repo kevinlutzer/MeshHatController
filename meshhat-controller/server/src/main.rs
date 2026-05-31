@@ -6,7 +6,7 @@ mod meshcore_proto {
 
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
-use tonic::{transport::Server};
+use tonic::transport::Server;
 
 use tracing::{error, info, instrument::WithSubscriber};
 
@@ -29,7 +29,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let socket_path = get_socket_path();
     info!(
         "Starting the service with serial port = {}, baud rate = {}, socket path = {}",
-        port, baud_rate, socket_path.display()
+        port,
+        baud_rate,
+        socket_path.display()
     );
 
     // ── Initialise MeshCore SDK over serial ──────────────────────────────────

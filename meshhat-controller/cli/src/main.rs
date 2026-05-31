@@ -34,27 +34,25 @@ enum Commands {
 async fn build_channel() -> anyhow::Result<tonic::transport::Channel> {
     Endpoint::try_from("http://[::]:50051")?
         .connect_with_connector(service_fn(|_: Uri| async {
-            let path = "/Users/kevinlutzer/Projects/MeshHatController/meshhat-controller/meshcore.sock";
+            let path =
+                "/Users/kevinlutzer/Projects/MeshHatController/meshhat-controller/meshcore.sock";
 
             // Connect to a Uds socket
             Ok::<_, std::io::Error>(TokioIo::new(UnixStream::connect(path).await?))
         }))
         .await
-        .with_context(|| {"Failed to create the connector channel"})
+        .with_context(|| "Failed to create the connector channel")
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-
     let cli = Cli::parse();
     match cli.command {
-        Commands::Reset{} => {
+        Commands::Reset {} => {
             let channel = build_channel().await?;
             let mut client = MeshCoreServiceClient::new(channel);
 
-            let _ = client
-                .reset(ResetRequest {})
-                .await?;
+            let _ = client.reset(ResetRequest {}).await?;
 
             println!("Successfully reset the device");
         }

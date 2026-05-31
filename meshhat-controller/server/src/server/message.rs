@@ -100,8 +100,7 @@ pub async fn send_message(
     drop(cmd);
 
     match result {
-        Ok(()) => Ok(Response::new(SendMessageResponse {
-        })),
+        Ok(()) => Ok(Response::new(SendMessageResponse {})),
         Err(e) => {
             error!(error = %e, "Send message failed");
             Ok(Response::new(SendMessageResponse {}))

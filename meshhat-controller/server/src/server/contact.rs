@@ -101,12 +101,10 @@ pub async fn delete_contact(
         .remove_contact(Destination::Hex(req.public_key_hex))
         .await
     {
-        Ok(()) => Ok(Response::new(DeleteContactResponse {
-        })),
+        Ok(()) => Ok(Response::new(DeleteContactResponse {})),
         Err(e) => {
             error!(error = %e, "DeleteContact failed");
-            Ok(Response::new(DeleteContactResponse {
-            }))
+            Ok(Response::new(DeleteContactResponse {}))
         }
     }
 }
