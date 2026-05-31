@@ -1,5 +1,5 @@
 [package]
-name = "MeshHatController"
+name = "server"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.93.0"
@@ -14,6 +14,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15.0"
 anyhow = "1.0.102"
 hex = "0.4.3"
+tokio-stream = { version = "0.1.18", features = ["net"] }
 
 [build-dependencies]
 tonic-build = "0.11"

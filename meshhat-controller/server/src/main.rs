@@ -4,13 +4,16 @@ mod meshcore_proto {
     tonic::include_proto!("meshcore");
 }
 
-use tonic::transport::Server;
+use tokio::net::UnixListener;
+use tokio_stream::wrappers::UnixListenerStream;
+use tonic::{transport::Server};
+
 use tracing::{error, info, instrument::WithSubscriber};
 
 use meshcore_rs::MeshCore;
 
 use app_env::{
-    get_baud_rate, get_grpc_listen_addr, get_serial_port, load_or_create_env_file, setup_tracing,
+    get_baud_rate, get_serial_port, get_socket_path, load_or_create_env_file, setup_tracing,
 };
 use meshcore_proto::mesh_core_service_server::MeshCoreServiceServer;
 use server::MeshCoreService;
@@ -23,10 +26,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let port = get_serial_port();
     let baud_rate = get_baud_rate();
-    let listen_addr = get_grpc_listen_addr();
+    let socket_path = get_socket_path();
     info!(
-        "Starting the service with serial port = {}, baud rate = {}, gRPC listen address = {}",
-        port, baud_rate, listen_addr
+        "Starting the service with serial port = {}, baud rate = {}, socket path = {}",
+        port, baud_rate, socket_path.display()
     );
 
     // ── Initialise MeshCore SDK over serial ──────────────────────────────────
@@ -38,32 +41,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let commands = meshcore.commands();
 
     // Verify connectivity and log the device name.
-    let self_info = commands
-        .clone()
-        .lock()
-        .await
-        .send_appstart()
-        .await
-        .map_err(|e| {
-            error!(error = %e, "send_appstart failed – is the device connected?");
-            e
-        })?;
+    // let self_info = commands
+    //     .clone()
+    //     .lock()
+    //     .await
+    //     .send_appstart()
+    //     .await
+    //     .map_err(|e| {
+    //         error!(error = %e, "send_appstart failed – is the device connected?");
+    //         e
+    //     })?;
 
-    info!("Connected to MeshCore device {}", self_info.name);
-
-    // ── gRPC server ──────────────────────────────────────────────────────────
-    let addr = listen_addr.parse().map_err(|e| {
-        error!(addr = %listen_addr, error = ?e, "Invalid listen address");
-        Box::<dyn std::error::Error>::from(format!("invalid GRPC_LISTEN_ADDR: {e}"))
-    })?;
+    // info!("Connected to MeshCore device {}", self_info.name);
 
     let service = MeshCoreService::new(commands);
 
-    info!(%addr, "gRPC server listening");
+    // info!(%socket_path.display(), "gRPC server listening");
+
+    let listener = UnixListener::bind(&socket_path)?;
+    let incoming = UnixListenerStream::new(listener);
 
     Server::builder()
         .add_service(MeshCoreServiceServer::new(service))
-        .serve(addr)
+        .serve_with_incoming(incoming)
         .with_current_subscriber()
         .await?;
 

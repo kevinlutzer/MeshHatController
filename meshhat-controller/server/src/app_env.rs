@@ -12,12 +12,12 @@ const ENV_FILE_NAME: &str = "settings.ini";
 const SNAP_COMMON: &str = "SNAP_COMMON";
 /// Default environment settings. These can be manipulated by editing the settings.ini
 const DEFAULT_SETTINGS: &str =
-    "MESHCORE_SERIAL_PORT=/dev/ttyUSB0\nMESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\n";
+    "MESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\n";
 
 /// Gets the settings directory for the service.
 /// - For a snap this is the $SNAP_COMMON
 /// - For local development or running the binary directly, this is the current working directory.
-fn get_settings_dir() -> PathBuf {
+fn get_working_dir() -> PathBuf {
     var(SNAP_COMMON)
         .map(PathBuf::from)
         .unwrap_or_else(|_| current_dir().expect("Failed to get the current directory"))
@@ -26,7 +26,7 @@ fn get_settings_dir() -> PathBuf {
 /// Loads the settings.ini file **or** creates it if it doesn't exist. This is used to load environment variables from the file for local development,
 /// and also to create the file with default values when running in a snap.
 pub async fn load_or_create_env_file() -> anyhow::Result<()> {
-    let settings_dir = get_settings_dir();
+    let settings_dir = get_working_dir();
     let env_file_path = settings_dir.join(ENV_FILE_NAME);
 
     if !env_file_path.exists() {
@@ -70,8 +70,8 @@ pub fn get_baud_rate() -> u32 {
         .unwrap_or(115_200)
 }
 
-/// Returns the gRPC listen address or the default address from the settings.ini file
-/// Defaults to "[::]:50051" if not set.
-pub fn get_grpc_listen_addr() -> String {
-    var("GRPC_LISTEN_ADDR").unwrap_or_else(|_| "[::]:50051".to_string())
+/// Returns the socket path we bind the gRPC server
+pub fn get_socket_path() -> PathBuf {
+    let working_dir = get_working_dir();
+    working_dir.join("meshcore.sock")
 }
