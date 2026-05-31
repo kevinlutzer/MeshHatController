@@ -4,6 +4,7 @@ use meshcore_rs::{
     Error, EventPayload, EventType,
     commands::{CommandHandler, Destination},
 };
+
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 use tracing::{error, info};

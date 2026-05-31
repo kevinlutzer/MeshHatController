@@ -21,10 +21,7 @@ message SendMessageRequest {
   string text      = 3;
   optional uint32 timestamp = 4; // unix seconds; 0 = let server use current time
 }
-message SendMessageResponse {
-  bool   success = 1;
-  string error   = 2;
-}
+message SendMessageResponse {}
 
 // --- ReceiveMessage ---
 // Polls the device for the next queued message (wraps get_msg).
@@ -53,19 +50,18 @@ message CreateContactRequest {
   double latitude       = 5; // decimal degrees
   double longitude      = 6; // decimal degrees
 }
-message CreateContactResponse {
-  bool   success = 1;
-  string error   = 2;
-}
+message CreateContactResponse {}
 
 // --- SearchContact ---
 // Fetches all contacts and filters client-side by name or pubkey prefix.
 message SearchContactRequest {
   string query = 1; // matches adv_name (case-insensitive) or pubkey_hex prefix
 }
+
 message SearchContactResponse {
   repeated ContactInfo contacts = 1;
 }
+
 message ContactInfo {
   string public_key_hex               = 1;
   string prefix_hex                   = 2;
@@ -83,16 +79,12 @@ message ContactInfo {
 message DeleteContactRequest {
   string public_key_hex = 1;
 }
-message DeleteContactResponse {
-  bool   success = 1;
-  string error   = 2;
-}
+
+message DeleteContactResponse {}
 
 // --- Healthcheck ---
 // Calls send_appstart() and returns the device name on success.
 message HealthcheckRequest {}
 message HealthcheckResponse {
-  bool   ok          = 1;
-  string device_name = 2;
-  string error       = 3;
+  string device_name = 1;
 }
