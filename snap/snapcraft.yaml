@@ -24,7 +24,7 @@ apps:
 parts:
   meshhat-controller:
     plugin: rust
-    source: .
+    source: meshhat-controller
     build-packages:
       - pkg-config
       - libssl-dev
