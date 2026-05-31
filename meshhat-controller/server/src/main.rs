@@ -4,7 +4,7 @@ mod meshcore_proto {
     tonic::include_proto!("meshcore");
 }
 
-use tokio::{signal,net::UnixListener};
+use tokio::{net::UnixListener, signal};
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::Server;
 

@@ -6,7 +6,9 @@ use tokio::net::UnixStream;
 use tonic::transport::{Endpoint, Uri};
 use tower::service_fn;
 
-use crate::meshcore_proto::{HealthcheckRequest, ResetRequest, mesh_core_service_client::MeshCoreServiceClient};
+use crate::meshcore_proto::{
+    HealthcheckRequest, ResetRequest, mesh_core_service_client::MeshCoreServiceClient,
+};
 
 mod meshcore_proto {
     tonic::include_proto!("meshcore");
@@ -60,9 +62,12 @@ async fn main() -> anyhow::Result<()> {
             println!("Successfully reset the device");
         }
         Commands::Healthcheck {} => {
-            let response = client.healthcheck(HealthcheckRequest{}).await?;
+            let response = client.healthcheck(HealthcheckRequest {}).await?;
 
-            println!("Health check passed with device {}", response.into_inner().device_name);
+            println!(
+                "Health check passed with device {}",
+                response.into_inner().device_name
+            );
         }
     }
 
