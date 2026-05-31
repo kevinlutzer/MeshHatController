@@ -4,6 +4,7 @@ use meshcore_rs::{
     Error, EventPayload, EventType,
     commands::{CommandHandler, Destination},
 };
+
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 use tracing::{error, info};
@@ -99,16 +100,10 @@ pub async fn send_message(
     drop(cmd);
 
     match result {
-        Ok(()) => Ok(Response::new(SendMessageResponse {
-            success: true,
-            error: String::new(),
-        })),
+        Ok(()) => Ok(Response::new(SendMessageResponse {})),
         Err(e) => {
             error!(error = %e, "Send message failed");
-            Ok(Response::new(SendMessageResponse {
-                success: false,
-                error: e.to_string(),
-            }))
+            Ok(Response::new(SendMessageResponse {}))
         }
     }
 }

@@ -42,16 +42,10 @@ pub async fn create_contact(
 
     let cmd = command.lock().await;
     match cmd.add_contact(&contact).await {
-        Ok(()) => Ok(Response::new(CreateContactResponse {
-            success: true,
-            error: String::new(),
-        })),
+        Ok(()) => Ok(Response::new(CreateContactResponse {})),
         Err(e) => {
             error!(error = %e, "CreateContact failed");
-            Ok(Response::new(CreateContactResponse {
-                success: false,
-                error: e.to_string(),
-            }))
+            Ok(Response::new(CreateContactResponse {}))
         }
     }
 }
@@ -107,16 +101,10 @@ pub async fn delete_contact(
         .remove_contact(Destination::Hex(req.public_key_hex))
         .await
     {
-        Ok(()) => Ok(Response::new(DeleteContactResponse {
-            success: true,
-            error: String::new(),
-        })),
+        Ok(()) => Ok(Response::new(DeleteContactResponse {})),
         Err(e) => {
             error!(error = %e, "DeleteContact failed");
-            Ok(Response::new(DeleteContactResponse {
-                success: false,
-                error: e.to_string(),
-            }))
+            Ok(Response::new(DeleteContactResponse {}))
         }
     }
 }
