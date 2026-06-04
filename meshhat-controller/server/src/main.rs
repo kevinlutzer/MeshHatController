@@ -15,6 +15,7 @@ use meshcore_rs::MeshCore;
 use app_env::{
     get_baud_rate, get_serial_port, get_socket_path, load_or_create_env_file, setup_tracing,
 };
+
 use meshcore_proto::mesh_core_service_server::MeshCoreServiceServer;
 use server::MeshCoreService;
 
@@ -61,12 +62,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             e
         })?;
 
-    // info!("Connected to MeshCore device {}", self_info.name);
+    info!("Connected to MeshCore device {}", self_info.name);
 
     let service = MeshCoreService::new(commands);
-
-    // info!(%socket_path.display(), "gRPC server listening");
-
     let listener = UnixListener::bind(&socket_path)?;
     let incoming = UnixListenerStream::new(listener);
 

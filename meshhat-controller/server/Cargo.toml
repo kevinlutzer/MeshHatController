@@ -21,7 +21,7 @@ dotenv = "0.15.0"
 hex = "0.4.3"
 tokio-stream = { version = "0.1.18", features = ["net"] }
 signal = "0.7.0"
-libgpiod = "1.0.0"
+serde_json = "1.0.150"
 #libgpiod = { version = "1.0.0", features = ["v2_1"] }
 
 [build-dependencies]
