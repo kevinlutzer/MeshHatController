@@ -50,7 +50,19 @@ impl MeshCoreServiceGrpc for MeshCoreService {
     }
 
     async fn reset(&self, _: Request<ResetRequest>) -> Result<Response<ResetResponse>, Status> {
+<<<<<<< HEAD
         reset::reset().await
+=======
+        let command = self.commands.lock().await;
+        command.reset().await.map_err(|e| {
+            error!(error = %e, "Failed to reset the device");
+            Status::internal("Failed to reset the device")
+        })?;
+
+        info!("Device reset successfully");
+
+        Ok(Response::new(ResetResponse {}))
+>>>>>>> main
     }
 
     async fn create_contact(

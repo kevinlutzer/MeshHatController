@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 use crate::meshcore_proto::{
     CreateContactRequest, DeleteContactRequest, GetNameRequest, ReceiveMessageRequest,
     ResetRequest, SearchContactRequest, SendMessageRequest,
@@ -5,15 +6,39 @@ use crate::meshcore_proto::{
 };
 use clap::{Parser, Subcommand};
 use env::get_client_uri_str;
+=======
+use anyhow::Context;
+use clap::{Parser, Subcommand};
+
+use hyper_util::rt::TokioIo;
+use tokio::net::UnixStream;
+use tonic::transport::{Endpoint, Uri};
+use tower::service_fn;
+
+use crate::meshcore_proto::{
+    HealthcheckRequest, ResetRequest, mesh_core_service_client::MeshCoreServiceClient,
+};
+>>>>>>> main
 
 mod meshcore_proto {
     tonic::include_proto!("meshcore");
 }
 
+<<<<<<< HEAD
+=======
+/// My awesome CLI tool
+>>>>>>> main
 #[derive(Parser)]
 #[command(name = "meshat-controller", version, about, long_about = None)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+<<<<<<< HEAD
+=======
+    /// Enable verbose output
+    #[arg(short, long)]
+    verbose: bool,
+
+>>>>>>> main
     #[command(subcommand)]
     command: Commands,
 }
@@ -22,6 +47,7 @@ struct Cli {
 enum Commands {
     /// Resets the device
     Reset {},
+<<<<<<< HEAD
 
     /// Gets the name of the device
     GetName {},
@@ -73,19 +99,42 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
+=======
+    /// Health check the device
+    Healthcheck {},
+}
+
+async fn build_channel() -> anyhow::Result<tonic::transport::Channel> {
+    Endpoint::try_from("http://[::]:50051")?
+        .connect_with_connector(service_fn(|_: Uri| async {
+            let path =
+                "/Users/kevinlutzer/Projects/MeshHatController/meshhat-controller/server/meshcore.sock";
+
+            // Connect to a Uds socket
+            Ok::<_, std::io::Error>(TokioIo::new(UnixStream::connect(path).await?))
+        }))
+        .await
+        .with_context(|| "Failed to create the connector channel")
+>>>>>>> main
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
+<<<<<<< HEAD
     let addr_str = get_client_uri_str();
     let mut client: MeshCoreServiceClient<tonic::transport::Channel> =
         MeshCoreServiceClient::connect(addr_str).await?;
+=======
+    let channel = build_channel().await?;
+    let mut client = MeshCoreServiceClient::new(channel);
+>>>>>>> main
 
     match cli.command {
         Commands::Reset {} => {
             let _ = client.reset(ResetRequest {}).await?;
+<<<<<<< HEAD
             println!("Successfully reset the device");
         },
 
@@ -206,6 +255,18 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 println!("[Contact {}] {}", msg.sender_hex, msg.text);
             }
+=======
+
+            println!("Successfully reset the device");
+        }
+        Commands::Healthcheck {} => {
+            let response = client.healthcheck(HealthcheckRequest {}).await?;
+
+            println!(
+                "Health check passed with device {}",
+                response.into_inner().device_name
+            );
+>>>>>>> main
         }
     }
 

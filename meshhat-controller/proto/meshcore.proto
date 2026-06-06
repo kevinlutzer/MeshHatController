@@ -79,6 +79,7 @@ message ContactInfo {
 message DeleteContactRequest {
   string public_key_hex = 1;
 }
+<<<<<<< HEAD
 
 message DeleteContactResponse {}
 
@@ -86,4 +87,14 @@ message DeleteContactResponse {}
 message GetNameRequest {}
 message GetNameResponse {
   string name = 1;
+=======
+
+message DeleteContactResponse {}
+
+// --- Healthcheck ---
+// Calls send_appstart() and returns the device name on success.
+message HealthcheckRequest {}
+message HealthcheckResponse {
+  string device_name = 1;
+>>>>>>> main
 }

@@ -1,7 +1,12 @@
 [workspace]
+<<<<<<< HEAD
 members = ["cli", "server", "env"]
 resolver = "2"
 
 [workspace.lints.clippy]
 expect_used = "deny"
 unwrap_used = "deny"
+=======
+members = ["cli","server"]
+resolver = "2"
+>>>>>>> main

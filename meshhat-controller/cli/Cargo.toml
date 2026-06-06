@@ -10,12 +10,16 @@ clap = { version = "4.6.1", features = ["derive"] }
 clap_derive = "4.6.1"
 hyper-util = { version = "0.1.20", features = ["tokio"] }
 prost = "0.14.3"
+<<<<<<< HEAD
 serde_json = "1.0.150"
+=======
+>>>>>>> main
 tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
 tonic = { version = "0.14.6", features = ["transport"] }
 tonic-build = "0.12"
 tonic-prost = "0.14.6"
 tower = "0.5.3"
+<<<<<<< HEAD
 env = { path = "../env" }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
@@ -24,3 +28,9 @@ tonic-prost-build = "0.14.6"
 
 [lints]
 workspace = true
+=======
+
+
+[build-dependencies]
+tonic-prost-build = "0.14.6"
+>>>>>>> main

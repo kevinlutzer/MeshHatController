@@ -19,6 +19,7 @@ tracing            = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15.0"
 hex = "0.4.3"
+<<<<<<< HEAD
 signal = "0.7.0"
 serde_json = "1.0.150"
 env = { path = "../env" }
@@ -29,3 +30,11 @@ tonic-prost-build = "0.14.6"
 
 [lints]
 workspace = true
+=======
+tokio-stream = { version = "0.1.18", features = ["net"] }
+signal = "0.7.0"
+libgpiod = { version = "1.0.0", features = ["v2_1"] }
+
+[build-dependencies]
+tonic-prost-build = "0.14.6"
+>>>>>>> main
