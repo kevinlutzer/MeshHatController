@@ -11,12 +11,12 @@ mod util;
 
 use meshcore_rs::commands::CommandHandler;
 
-use crate::server::message::{receive_message, send_message};
 use crate::meshcore_proto::{
     HealthcheckRequest, HealthcheckResponse, ReceiveMessageRequest, ReceiveMessageResponse,
     ResetRequest, ResetResponse, SendMessageRequest, SendMessageResponse,
     mesh_core_service_server::MeshCoreService as MeshCoreServiceGrpc,
 };
+use crate::server::message::{receive_message, send_message};
 
 pub struct MeshCoreService {
     commands: Arc<Mutex<CommandHandler>>,

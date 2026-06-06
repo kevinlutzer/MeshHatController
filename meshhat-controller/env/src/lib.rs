@@ -2,11 +2,11 @@ use anyhow::Context;
 use dotenvy::from_filename;
 use std::{
     env::{current_dir, var},
+    net::SocketAddr,
     path::PathBuf,
-    net::SocketAddr
 };
 use tokio::{fs::File, io::AsyncWriteExt};
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt};
 
 /// The name of the environment file that contains the service settings
 const ENV_FILE_NAME: &str = "settings.ini";
@@ -51,8 +51,7 @@ pub async fn load_or_create_env_file() -> anyhow::Result<()> {
 pub async fn setup_tracing() {
     fmt()
         .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info")),
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
 }
@@ -72,8 +71,13 @@ pub fn get_baud_rate() -> u32 {
         .unwrap_or(115_200)
 }
 
+pub fn get_addr_str() -> String {
+    var("GRPC_LISTEN_ADDR").unwrap_or_else(|_| "[::]:50051".to_string())
+}
 
 pub fn get_addr() -> anyhow::Result<SocketAddr> {
-    let addr_str = var("GRPC_LISTEN_ADDR").unwrap_or_else(|_| "[::]:50051".to_string());
-    addr_str.parse::<std::net::SocketAddr>().with_context(|| format!("Failed to parse GRPC_LISTEN_ADDR: {}", addr_str))
+    let addr_str = get_addr_str();
+    addr_str
+        .parse::<std::net::SocketAddr>()
+        .with_context(|| format!("Failed to parse GRPC_LISTEN_ADDR: {}", addr_str))
 }

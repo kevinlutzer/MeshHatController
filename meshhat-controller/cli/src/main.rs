@@ -1,15 +1,15 @@
+use crate::meshcore_proto::{
+    CreateContactRequest, DeleteContactRequest, HealthcheckRequest, ReceiveMessageRequest,
+    ResetRequest, SearchContactRequest, SendMessageRequest,
+    mesh_core_service_client::MeshCoreServiceClient, send_message_request::Destination,
+};
 use anyhow::Context;
 use clap::{Parser, Subcommand};
+use env::get_addr_str;
 use hyper_util::rt::TokioIo;
 use tokio::net::UnixStream;
 use tonic::transport::{Endpoint, Uri};
 use tower::service_fn;
-use crate::meshcore_proto::{
-    CreateContactRequest, DeleteContactRequest, HealthcheckRequest, ResetRequest,
-    SearchContactRequest, SendMessageRequest, ReceiveMessageRequest,
-    send_message_request::Destination,
-    mesh_core_service_client::MeshCoreServiceClient,
-};
 
 mod meshcore_proto {
     tonic::include_proto!("meshcore");
@@ -42,9 +42,7 @@ enum Commands {
     },
 
     /// Deletes a contact with a specific hash
-    DeleteContact {
-        public_key_hex: String,
-    },
+    DeleteContact { public_key_hex: String },
 
     /// Search a contact
     SearchContact {
@@ -82,22 +80,15 @@ enum Commands {
     },
 }
 
-async fn build_channel() -> anyhow::Result<tonic::transport::Channel> {
-    Endpoint::try_from("http://[::]:50051")?
-        .connect_with_connector(service_fn(|_: Uri| async {
-            let path =
-                "/Users/kevinlutzer/Projects/MeshHatController/meshhat-controller/server/meshcore.sock";
-            Ok::<_, std::io::Error>(TokioIo::new(UnixStream::connect(path).await?))
-        }))
-        .await
-        .with_context(|| "Failed to create the connector channel")
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let channel = build_channel().await?;
-    let mut client = MeshCoreServiceClient::new(channel);
+
+    let addr_str = get_addr_str();
+    let endpoint = Endpoint::try_from(addr_str.clone())
+        .with_context(|| format!("Failed to parse gRPC listen address: {}", addr_str))?;
+    let mut client: MeshCoreServiceClient<tonic::transport::Channel> =
+        MeshCoreServiceClient::connect(endpoint).await?;
 
     match cli.command {
         Commands::Reset {} => {
@@ -140,44 +131,61 @@ async fn main() -> anyhow::Result<()> {
                 for c in &contacts {
                     println!(
                         "{} | {} | type={} flags={} ({}, {})",
-                        c.public_key_hex, c.name, c.contact_type,
-                        c.flags, c.latitude, c.longitude
+                        c.public_key_hex, c.name, c.contact_type, c.flags, c.latitude, c.longitude
                     );
                 }
             }
         }
 
-        Commands::CreateContact { public_key_hex, name, contact_type, flags, latitude, longitude } => {
-            client.create_contact(CreateContactRequest {
-                public_key_hex,
-                name,
-                contact_type,
-                flags,
-                latitude,
-                longitude,
-            }).await?;
+        Commands::CreateContact {
+            public_key_hex,
+            name,
+            contact_type,
+            flags,
+            latitude,
+            longitude,
+        } => {
+            client
+                .create_contact(CreateContactRequest {
+                    public_key_hex,
+                    name,
+                    contact_type,
+                    flags,
+                    latitude,
+                    longitude,
+                })
+                .await?;
             println!("Successfully created contact");
         }
 
         Commands::DeleteContact { public_key_hex } => {
-            client.delete_contact(DeleteContactRequest { public_key_hex }).await?;
+            client
+                .delete_contact(DeleteContactRequest { public_key_hex })
+                .await?;
             println!("Successfully deleted contact");
         }
 
-        Commands::SendMessage { text, contact_pubkey_hex, channel_index, timestamp } => {
+        Commands::SendMessage {
+            text,
+            contact_pubkey_hex,
+            channel_index,
+            timestamp,
+        } => {
             let destination = match (contact_pubkey_hex, channel_index) {
                 (Some(pubkey), None) => Destination::ContactPubkeyHex(pubkey),
-                (None, Some(idx))   => Destination::ChannelIndex(idx),
+                (None, Some(idx)) => Destination::ChannelIndex(idx),
                 _ => anyhow::bail!(
                     "Exactly one of --contact-pubkey-hex or --channel-index must be provided"
                 ),
             };
 
-            client.send_message(SendMessageRequest {
-                destination: Some(destination),
-                text,
-                timestamp,
-            }).await?;
+            client
+                .send_message(SendMessageRequest {
+                    destination: Some(destination),
+                    text,
+                    timestamp,
+                })
+                .await?;
             println!("Message sent successfully");
         }
 

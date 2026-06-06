@@ -1,4 +1,3 @@
-
 mod server;
 mod meshcore_proto {
     tonic::include_proto!("meshcore");
@@ -11,9 +10,7 @@ use tracing::{error, info, instrument::WithSubscriber};
 
 use meshcore_rs::MeshCore;
 
-use env::{
-    get_baud_rate, get_addr, get_serial_port, load_or_create_env_file, setup_tracing,
-};
+use env::{get_addr, get_baud_rate, get_serial_port, load_or_create_env_file, setup_tracing};
 
 use server::MeshCoreService;
 
@@ -33,11 +30,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let port = get_serial_port();
     let baud_rate = get_baud_rate();
 
-
     info!(
         "Starting the service with serial port = {}, baud rate = {}",
-        port,
-        baud_rate
+        port, baud_rate
     );
 
     let meshcore = MeshCore::serial(&port, baud_rate).await.map_err(|e| {
