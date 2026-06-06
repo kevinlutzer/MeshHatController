@@ -13,9 +13,8 @@ use meshcore_rs::commands::CommandHandler;
 
 use crate::meshcore_proto::{GetNameRequest, GetNameResponse};
 use crate::meshcore_proto::{
-    ReceiveMessageRequest, ReceiveMessageResponse,
-    ResetRequest, ResetResponse, SendMessageRequest, SendMessageResponse,
-    mesh_core_service_server::MeshCoreService as MeshCoreServiceGrpc,
+    ReceiveMessageRequest, ReceiveMessageResponse, ResetRequest, ResetResponse, SendMessageRequest,
+    SendMessageResponse, mesh_core_service_server::MeshCoreService as MeshCoreServiceGrpc,
 };
 use crate::server::message::{receive_message, send_message};
 

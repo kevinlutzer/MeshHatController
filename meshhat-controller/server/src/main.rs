@@ -16,7 +16,7 @@ use env::{get_addr, get_baud_rate, get_serial_port, load_or_create_env_file, set
 use server::MeshCoreService;
 
 async fn shutdown_signal() {
-    // we have to expect here because the overall function signature requires us to 
+    // we have to expect here because the overall function signature requires us to
     // to **not** return a result
     #[allow(clippy::expect_used)]
     signal::ctrl_c()
@@ -62,8 +62,12 @@ async fn main() -> anyhow::Result<()> {
     info!("Connected to MeshCore device {}", self_info.name);
 
     let (health_reporter, health_server) = health_reporter();
-    health_reporter.set_serving::<MeshCoreServiceServer<MeshCoreService>>().await;
-    health_reporter.set_service_status("MeshCoreServiceServer", ServingStatus::Serving).await;
+    health_reporter
+        .set_serving::<MeshCoreServiceServer<MeshCoreService>>()
+        .await;
+    health_reporter
+        .set_service_status("MeshCoreServiceServer", ServingStatus::Serving)
+        .await;
 
     let service = MeshCoreService::new(commands, &self_info.name);
 

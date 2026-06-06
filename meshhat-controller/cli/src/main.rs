@@ -87,15 +87,12 @@ async fn main() -> anyhow::Result<()> {
         Commands::Reset {} => {
             let _ = client.reset(ResetRequest {}).await?;
             println!("Successfully reset the device");
-        },
+        }
 
         Commands::GetName {} => {
             let response = client.get_name(GetNameRequest {}).await?;
-            println!(
-                "Device name: {}",
-                response.into_inner().name
-            );
-        },
+            println!("Device name: {}", response.into_inner().name);
+        }
 
         Commands::SearchContact { query, json } => {
             let contacts = client
@@ -128,7 +125,7 @@ async fn main() -> anyhow::Result<()> {
                     );
                 }
             }
-        },
+        }
 
         Commands::CreateContact {
             public_key_hex,
@@ -149,14 +146,14 @@ async fn main() -> anyhow::Result<()> {
                 })
                 .await?;
             println!("Successfully created contact");
-        },
+        }
 
         Commands::DeleteContact { public_key_hex } => {
             client
                 .delete_contact(DeleteContactRequest { public_key_hex })
                 .await?;
             println!("Successfully deleted contact");
-        },
+        }
 
         Commands::SendMessage {
             text,
@@ -180,7 +177,7 @@ async fn main() -> anyhow::Result<()> {
                 })
                 .await?;
             println!("Message sent successfully");
-        },
+        }
 
         Commands::ReceiveMessage { json } => {
             let msg = client

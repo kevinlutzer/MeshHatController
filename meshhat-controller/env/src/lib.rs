@@ -1,7 +1,9 @@
 use anyhow::Context;
 use dotenvy::from_filename;
 use std::{
-    env::{current_dir, var}, net::SocketAddr, path::PathBuf
+    env::{current_dir, var},
+    net::SocketAddr,
+    path::PathBuf,
 };
 use tokio::{fs::File, io::AsyncWriteExt};
 use tracing_subscriber::{EnvFilter, fmt};
@@ -11,8 +13,7 @@ const ENV_FILE_NAME: &str = "settings.ini";
 /// Snap specific directory that the service will have access too
 const SNAP_COMMON: &str = "SNAP_COMMON";
 /// Default environment settings. These can be manipulated by editing the settings.ini
-const DEFAULT_SETTINGS: &str =
-    "GRPC_CLIENT_ADDR=https://127.0.0.1:50051\nMESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\nMESHCORE_SERIAL_PORT=/dev/ttyAMA0\n";
+const DEFAULT_SETTINGS: &str = "GRPC_CLIENT_ADDR=https://127.0.0.1:50051\nMESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\nMESHCORE_SERIAL_PORT=/dev/ttyAMA0\n";
 
 /// Gets the settings directory for the service.
 /// - For a snap this is the $SNAP_COMMON
@@ -20,7 +21,7 @@ const DEFAULT_SETTINGS: &str =
 fn get_working_dir() -> anyhow::Result<PathBuf> {
     match var(SNAP_COMMON).map(PathBuf::from) {
         Ok(dir) => Ok(dir),
-        Err(_) => current_dir().with_context(|| "Failed to get the current directory")
+        Err(_) => current_dir().with_context(|| "Failed to get the current directory"),
     }
 }
 
