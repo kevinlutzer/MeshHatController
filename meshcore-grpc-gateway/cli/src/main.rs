@@ -1,6 +1,6 @@
-use crate::meshcore_proto::{
-    CreateContactRequest, DeleteContactRequest, GetNameRequest, ReceiveMessageRequest,
-    ResetRequest, SearchContactRequest, SendMessageRequest,
+    use crate::meshcore_proto::{
+    CreateContactRequest, DeleteContactRequest, GetInfoRequest, ReceiveMessageRequest,
+    ResetRequest, SearchContactRequest, SendMessageRequest, WatchMessagesRequest,
     mesh_core_service_client::MeshCoreServiceClient, send_message_request::Destination,
 };
 use clap::{Parser, Subcommand};
@@ -23,8 +23,8 @@ enum Commands {
     /// Resets the device
     Reset {},
 
-    /// Prints the name of the device
-    GetName {},
+    /// Prints information about the device
+    GetInfo {},
 
     /// Creates a contact
     CreateContact {
@@ -89,9 +89,9 @@ async fn main() -> anyhow::Result<()> {
             println!("Successfully reset the device");
         }
 
-        Commands::GetName {} => {
-            let response = client.get_name(GetNameRequest {}).await?;
-            println!("Device name: {}", response.into_inner().name);
+        Commands::GetInfo {} => {
+            let response = client.get_info(GetInfoRequest {}).await?;
+            println!("Device info: {}", response.into_inner().name);
         }
 
         Commands::SearchContact { query, json } => {

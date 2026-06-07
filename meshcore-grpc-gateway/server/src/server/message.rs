@@ -10,8 +10,7 @@ use tonic::{Request, Response, Status};
 use tracing::{debug, error, info};
 
 use crate::meshcore_proto::{
-    ReceiveMessageResponse, SendMessageRequest, SendMessageResponse,
-    send_message_request::Destination as ProtoDestination,
+    ChannelMessage, ContactMessage, ReceiveMessageResponse, SendMessageRequest, SendMessageResponse, receive_message_response::Payload, send_message_request::Destination as ProtoDestination
 };
 
 pub async fn receive_message(
@@ -27,8 +26,7 @@ pub async fn receive_message(
 
     let Some(event) = event_opt else {
         return Ok(Response::new(ReceiveMessageResponse {
-            has_message: false,
-            ..Default::default()
+            payload: None,
         }));
     };
 
@@ -37,11 +35,10 @@ pub async fn receive_message(
             if let EventPayload::ContactMessage(msg) = event.payload {
                 info!(sender = %hex::encode(msg.sender_prefix), "Received contact messasge");
                 ReceiveMessageResponse {
-                    has_message: true,
-                    is_channel_msg: false,
-                    sender_hex: hex::encode(msg.sender_prefix),
-                    channel_index: 0,
-                    text: msg.text,
+                    payload: Some(Payload::ContactMessage(ContactMessage {
+                        sender_prefix_hex: hex::encode(msg.sender_prefix),
+                        text: msg.text,
+                    }))
                 }
             } else {
                 return Err(Status::internal("ContactMsgRecv event missing payload"));
@@ -51,11 +48,10 @@ pub async fn receive_message(
             if let EventPayload::ChannelMessage(msg) = event.payload {
                 info!(channel = msg.channel_idx, "Received channel messasge");
                 ReceiveMessageResponse {
-                    has_message: true,
-                    is_channel_msg: true,
-                    sender_hex: String::new(),
-                    channel_index: msg.channel_idx as u32,
-                    text: msg.text,
+                    payload: Some(Payload::ChannelMessage(ChannelMessage {
+                        channel_index: msg.channel_idx as u32,
+                        text: msg.text,
+                    }))
                 }
             } else {
                 return Err(Status::internal("ChannelMsgRecv event missing payload"));
@@ -77,11 +73,18 @@ pub async fn send_message(
 ) -> Result<Response<SendMessageResponse>, Status> {
     let req = request.into_inner();
     let text = &req.text;
-    let timestamp = req.timestamp;
+
+    // Convert thei 
+    let timestamp = if let Some(d) = req.sent_at {
+        Some(d.seconds as u32)
+    } else {
+        None
+    };
 
     let cmd = command.lock().await;
     let result = match req.destination {
         Some(ProtoDestination::ContactPubkeyHex(ref hex)) => {
+
             let result: Result<(), Error> = cmd
                 .send_msg(Destination::Hex(hex.to_string()), text, timestamp)
                 .await

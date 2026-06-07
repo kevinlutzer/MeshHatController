@@ -1,61 +1,89 @@
 syntax = "proto3";
+
 package meshcore;
 
-service MeshCoreService {
-  rpc SendMessage    (SendMessageRequest)    returns (SendMessageResponse);
-  rpc ReceiveMessage (ReceiveMessageRequest) returns (ReceiveMessageResponse);
-  rpc Reset          (ResetRequest)          returns (ResetResponse);
-  rpc CreateContact  (CreateContactRequest)  returns (CreateContactResponse);
-  rpc SearchContact  (SearchContactRequest)  returns (SearchContactResponse);
-  rpc DeleteContact  (DeleteContactRequest)  returns (DeleteContactResponse);
-  rpc GetName    (GetNameRequest)    returns (GetNameResponse);
+import "google/protobuf/timestamp.proto";
+
+enum ContactType {
+  CONTACT_TYPE_UNSPECIFIED = 0;
+  CONTACT_TYPE_NODE        = 1;
+  CONTACT_TYPE_GATEWAY     = 2;
+  // extend as needed
 }
 
-// --- SendMessage ---
-// Destination is either a contact (full 64-char hex pubkey) or a channel index.
+enum ContactFlags {
+  CONTACT_FLAGS_NONE      = 0;
+  CONTACT_FLAGS_TRUSTED   = 1;
+  CONTACT_FLAGS_BLOCKED   = 2;
+  // bitfield-style; add values as powers of 2
+}
+
+// Sends a text message to a contact (by pubkey) or a broadcast channel.
 message SendMessageRequest {
   oneof destination {
-    string contact_pubkey_hex = 1;
+    string contact_pubkey_hex = 1;  // full 64-char hex (32 bytes)
     uint32 channel_index      = 2;
   }
-  string text      = 3;
-  optional uint32 timestamp = 4; // unix seconds; 0 = let server use current time
+  string                    text      = 3;
+  google.protobuf.Timestamp sent_at   = 4;  // omit to use server time
 }
+
 message SendMessageResponse {}
 
-// --- ReceiveMessage ---
-// Polls the device for the next queued message (wraps get_msg).
+// Polls for the next queued inbound message.
 message ReceiveMessageRequest {}
+
 message ReceiveMessageResponse {
-  bool   has_message    = 1;
-  bool   is_channel_msg = 2; // true = ChannelMessage, false = ContactMessage
-  string sender_hex     = 3; // 6-byte prefix hex for ContactMessage; empty for channel
-  uint32 channel_index  = 4; // populated for ChannelMessage
-  string text           = 5;
+  oneof payload {
+    ContactMessage contact_message = 1;
+    ChannelMessage channel_message = 2;
+    // field absent entirely when queue is empty — no more has_message bool needed
+  }
 }
 
-// --- Reset ---
-// Drives a GPIO pin LOW for hold_ms milliseconds then releases it HIGH.
-// Intended to hard-reset the attached MeshCore radio module.
-message ResetRequest {}
+message WatchMessagesRequest {}
+
+message WatchMessagesResponse {
+  oneof payload {
+    ContactMessage contact_message = 1;
+    ChannelMessage channel_message = 2;
+  }
+}
+
+// A direct message from a known contact.
+message ContactMessage {
+  string sender_prefix_hex = 1;  // 6-byte (12-char) hex prefix of sender pubkey
+  string text              = 2;
+}
+
+// A message broadcast on a numbered channel.
+message ChannelMessage {
+  uint32 channel_index = 1;
+  string text          = 2;
+}
+
+// Pulses the radio module's reset GPIO LOW for hold_ms, then releases HIGH.
+message ResetRequest {
+  // By default it will hold the reset for 1000ms
+  optional uint32 hold_ms = 1;  // pulse duration; 0 = use device default
+}
+
 message ResetResponse {}
 
-// --- CreateContact ---
-// Wraps CommandHandler::add_contact.
 message CreateContactRequest {
-  string public_key_hex = 1; // 64-char hex = 32 bytes
-  string name           = 2;
-  uint32 contact_type   = 3;
-  uint32 flags          = 4;
-  double latitude       = 5; // decimal degrees
-  double longitude      = 6; // decimal degrees
+  string      public_key_hex = 1;  // 64-char hex (32 bytes)
+  string      name           = 2;
+  ContactType contact_type   = 3;
+  uint32      flags          = 4;  // bitmask of ContactFlags
+  double      latitude       = 5;  // decimal degrees; 0.0 if unknown
+  double      longitude      = 6;
 }
+
 message CreateContactResponse {}
 
-// --- SearchContact ---
-// Fetches all contacts and filters client-side by name or pubkey prefix.
+// Fetches all contacts filtered by name (case-insensitive) or pubkey hex prefix.
 message SearchContactRequest {
-  string query = 1; // matches adv_name (case-insensitive) or pubkey_hex prefix
+  string query = 1;
 }
 
 message SearchContactResponse {
@@ -63,27 +91,46 @@ message SearchContactResponse {
 }
 
 message ContactInfo {
-  string public_key_hex               = 1;
-  string prefix_hex                   = 2;
-  string name                         = 3;
-  uint32 contact_type                 = 4;
-  uint32 flags                        = 5;
-  double latitude                     = 6;
-  double longitude                    = 7;
-  uint32 last_advert                  = 8;
-  uint32 last_modification_timestamp  = 9;
+  string                    public_key_hex              = 1;
+  string                    prefix_hex                  = 2;  // 12-char display shorthand
+  string                    name                        = 3;
+  ContactType               contact_type                = 4;
+  uint32                    flags                       = 5;  // bitmask of ContactFlags
+  double                    latitude                    = 6;
+  double                    longitude                   = 7;
+  google.protobuf.Timestamp last_advertised_at          = 8;
+  google.protobuf.Timestamp last_modified_at            = 9;
 }
 
-// --- DeleteContact ---
-// Wraps CommandHandler::remove_contact by full 64-char hex pubkey.
 message DeleteContactRequest {
-  string public_key_hex = 1;
+  string public_key_hex = 1;  // 64-char hex
 }
 
 message DeleteContactResponse {}
 
-// --- GetName ---
-message GetNameRequest {}
-message GetNameResponse {
-  string name = 1;
+message GetInfoRequest {}
+
+message GetInfoResponse {
+  string name           = 1;
+  // string public_key_hex = 2;  // node's own 64-char pubkey
+  // string prefix_hex     = 3;  // 12-char display shorthand
+}
+
+service MeshCoreService {
+  // Sends a message to a contact or broadcast channel. Returns immediately; no delivery guarantee.
+  rpc SendMessage    (SendMessageRequest)    returns (SendMessageResponse);
+  // Polls for the next queued inbound message. Returns empty if no messages are waiting.
+  rpc ReceiveMessage (ReceiveMessageRequest) returns (ReceiveMessageResponse);
+  // Streams inbound messages as they arrive. Stays open indefinitely until client disconnects.
+  rpc WatchMessages   (WatchMessagesRequest)   returns (stream WatchMessagesResponse);
+  // Pulses the radio module's controller reset GPIO LOW for hold_ms, then releases HIGH.
+  rpc Reset          (ResetRequest)          returns (ResetResponse);
+  // Creates a new contact with the given info. Public key must be unique; returns error if duplicate.
+  rpc CreateContact  (CreateContactRequest)  returns (CreateContactResponse);
+  // Fetches all contacts filtered by name (case-insensitive) or pubkey hex prefix. Returns empty list if no matches.
+  rpc SearchContact  (SearchContactRequest)  returns (SearchContactResponse);
+  // Deletes a contact by their public key.
+  rpc DeleteContact  (DeleteContactRequest)  returns (DeleteContactResponse);
+  // Fetches information about the meshcore node.
+  rpc GetInfo        (GetInfoRequest)        returns (GetInfoResponse);  // replaces GetName
 }

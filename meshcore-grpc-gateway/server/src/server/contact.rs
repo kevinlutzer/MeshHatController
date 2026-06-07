@@ -9,9 +9,12 @@ use meshcore_rs::{
     events::Contact,
 };
 
-use crate::meshcore_proto::{
-    ContactInfo, CreateContactRequest, CreateContactResponse, DeleteContactRequest,
-    DeleteContactResponse, SearchContactRequest, SearchContactResponse,
+use crate::{
+    meshcore_proto::{
+        ContactInfo, CreateContactRequest, CreateContactResponse, DeleteContactRequest,
+        DeleteContactResponse, SearchContactRequest, SearchContactResponse,
+    },
+    server::util::timestamp_from_unix,
 };
 
 pub async fn create_contact(
@@ -63,6 +66,8 @@ pub async fn search_contact(
         .await
         .map_err(|e| Status::internal(e.to_string()))?;
 
+    // Grab **all** the contacts and then filter based
+    // on the filtering criteria.
     let contacts: Vec<ContactInfo> = all_contacts
         .into_iter()
         .filter(|c| {
@@ -71,16 +76,30 @@ pub async fn search_contact(
             }
             c.adv_name.to_lowercase().contains(&query) || c.public_key_hex().starts_with(&query)
         })
-        .map(|c| ContactInfo {
-            public_key_hex: c.public_key_hex(),
-            prefix_hex: c.prefix_hex(),
-            name: c.adv_name.clone(),
-            contact_type: c.contact_type as u32,
-            flags: c.flags as u32,
-            latitude: c.latitude(),
-            longitude: c.longitude(),
-            last_advert: c.last_advert,
-            last_modification_timestamp: c.last_modification_timestamp,
+        .map(|c| {
+            let last_advertised_at = if c.last_advert > 0 {
+                Some(timestamp_from_unix(c.last_advert))
+            } else {
+                None
+            };
+
+            let last_modified_at = if c.last_modification_timestamp > 0 {
+                Some(timestamp_from_unix(c.last_modification_timestamp))
+            } else {
+                None
+            };
+
+            ContactInfo {
+                public_key_hex: c.public_key_hex(),
+                prefix_hex: c.prefix_hex(),
+                name: c.adv_name.clone(),
+                contact_type: c.contact_type as i32,
+                flags: c.flags as u32,
+                latitude: c.latitude(),
+                longitude: c.longitude(),
+                last_advertised_at,
+                last_modified_at,
+            }
         })
         .collect();
 
