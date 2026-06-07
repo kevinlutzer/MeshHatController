@@ -1,4 +1,4 @@
-name: meshhat-controller
+name: meshcore-grpc-gateway
 base: core24
 version: "1.0.0"
 summary: gRPC server bridging MeshCore radio nodes over serial
@@ -6,8 +6,8 @@ description: |
   Exposes a gRPC interface (SendMessage, ReceiveMessage, Reset,
   CreateContact, SearchContact, DeleteContact, Health check) backed by
   a MeshCore companion radio node connected via serial port.
-source-code: https://github.com/kevinlutzer/MeshHatController
-website: https://github.com/kevinlutzer/MeshHatController
+source-code: https://github.com/kevinlutzer/MeshCoreGRPCGateway
+website: https://github.com/kevinlutzer/MeshCoreGRPCGateway
 license: Apache-2.0
 
 grade: stable
@@ -25,14 +25,15 @@ apps:
     plugs: [network, serial-port, gpio-control]
 
 parts:
-  meshhat-controller:
+  meshcore-grpc-gateway:
     plugin: rust
-    source: meshhat-controller
+    source: meshcore-grpc-gateway
     build-packages:
       - pkg-config
       - libssl-dev
       - protobuf-compiler
       - libdbus-1-dev
+
     organize:
       cli: bin/cli
       server: bin/server
