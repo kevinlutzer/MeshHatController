@@ -55,21 +55,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
  
-      # snapcraft needs LXD; the canonical action wires everything up:
-      # installs snapcraft, initialises LXD, and sets the build provider.
-      - name: Install Snapcraft
-        uses: snapcore/action-build@v1
-        id: snap-build
-        with:
-          snapcraft-channel: latest/edge
+      - name: Update version with build ID
+        run: |
+            current=$(grep -oP "^version: '?\K[^'\s]+" snap/snapcraft.yaml | sed 's/-alpha.*//')
+            sed -i "s/^version:.*/version: '${current}-alpha.${{ github.run_number }}'/" snap/snapcraft.yaml
 
-  snap-amd64:
-    name: Snap build AMD64 (LXD)
-    runs-on: ubuntu-24.04
-    needs: [fmt-lint-build]
-    steps:
-      - uses: actions/checkout@v4
- 
       # snapcraft needs LXD; the canonical action wires everything up:
       # installs snapcraft, initialises LXD, and sets the build provider.
       - name: Install Snapcraft
@@ -82,3 +72,42 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: snap-build-artifacts
+
+      - uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDS }}
+        with:
+          snap: ${{ steps.snap-build.outputs.snap }}
+          release: edge
+
+  snap-amd64:
+    name: Snap build AMD64 (LXD)
+    runs-on: ubuntu-24.04
+    needs: [fmt-lint-build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update version with build ID
+        run: |
+            current=$(grep -oP "^version: '?\K[^'\s]+" snap/snapcraft.yaml | sed 's/-alpha.*//')
+            sed -i "s/^version:.*/version: '${current}-alpha.${{ github.run_number }}'/" snap/snapcraft.yaml
+
+      # snapcraft needs LXD; the canonical action wires everything up:
+      # installs snapcraft, initialises LXD, and sets the build provider.
+      - name: Install Snapcraft
+        uses: snapcore/action-build@v1
+        id: snap-build
+        with:
+          snapcraft-channel: latest/edge
+
+      - name: Upload snap build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: snap-build-artifacts
+
+      - uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDS }}
+        with:
+          snap: ${{ steps.snap-build.outputs.snap }}
+          release: edge
