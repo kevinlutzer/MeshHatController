@@ -11,7 +11,7 @@ use tracing::{error, info, instrument::WithSubscriber};
 
 use meshcore_rs::MeshCore;
 
-use env::{get_addr, get_baud_rate, get_serial_port, load_or_create_env_file, setup_tracing};
+use env::{get_addr, get_baud_rate, get_serial_port, load_env_file, setup_tracing};
 
 use server::MeshCoreService;
 
@@ -28,7 +28,7 @@ async fn shutdown_signal() {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    load_or_create_env_file().await?;
+    load_env_file().await?;
 
     setup_tracing().await;
 

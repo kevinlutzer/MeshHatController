@@ -11,9 +11,15 @@ path = "src/lib.rs"
 name = "snap_install"
 path = "src/bin/snap_install.rs"
 
+[[bin]]
+name = "snap_configure"
+path = "src/bin/snap_configure.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 dotenvy = "0.15.7"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
 tokio = { version = "1.52.3", features = ["fs", "rt-multi-thread", "io-util", "macros"] }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 

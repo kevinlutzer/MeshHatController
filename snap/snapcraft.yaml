@@ -38,3 +38,4 @@ parts:
       cli: bin/cli
       server: bin/server
       snap_install: snap/hooks/install
+      snap_configure: snap/hooks/configure

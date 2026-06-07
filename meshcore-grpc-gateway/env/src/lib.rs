@@ -7,6 +7,7 @@ use std::{
 };
 use tokio::{fs::File, io::AsyncWriteExt};
 use tracing_subscriber::{EnvFilter, fmt};
+use serde::{Deserialize, Serialize};
 
 /// The name of the environment file that contains the service settings
 const ENV_FILE_NAME: &str = "settings.ini";
@@ -14,6 +15,18 @@ const ENV_FILE_NAME: &str = "settings.ini";
 const SNAP_COMMON: &str = "SNAP_COMMON";
 /// Default environment settings. These can be manipulated by editing the settings.ini
 const DEFAULT_SETTINGS: &str = "GRPC_CLIENT_ADDR=https://127.0.0.1:50051\nMESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\nMESHCORE_SERIAL_PORT=/dev/ttyAMA0\n";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AppSettings {
+    #[serde(default = "https://127.0.0.1:50051")]
+    grpc_client_addr: String,
+    #[serde(default = "[::]:50051")]
+    grpc_listen_addr: String,
+    #[serde(default = "/dev/ttyAMA0")]
+    meshcore_serial_port: String,
+    #[serde(default = "115200")]
+    meshcore_baud_rate: u32,
+}
 
 /// Gets the settings directory for the service.
 /// - For a snap this is the $SNAP_COMMON
@@ -42,21 +55,11 @@ pub async fn init_env() -> anyhow::Result<()> {
 
 /// Loads the settings.ini file **or** creates it if it doesn't exist. This is used to load environment variables from the file for local development,
 /// and also to create the file with default values when running in a snap.
-pub async fn load_or_create_env_file() -> anyhow::Result<()> {
+pub async fn load_env_file() -> anyhow::Result<()> {
     let settings_dir = get_working_dir()?;
     let env_file_path = settings_dir.join(ENV_FILE_NAME);
-
-    if !env_file_path.exists() {
-        let mut file = File::create(&env_file_path)
-            .await
-            .with_context(|| "Failed to create settings.ini file")?;
-        file.write_all(DEFAULT_SETTINGS.as_bytes())
-            .await
-            .with_context(|| "Failed to write default settings.ini content")?;
-    }
-
     from_filename(&env_file_path)
-        .with_context(|| "Failed to load the settings.ini file. It should exist")?;
+        .with_context(|| "Failed to load the settings.ini file. It should exist.")?;
 
     Ok(())
 }
@@ -86,7 +89,7 @@ pub fn get_baud_rate() -> u32 {
         .unwrap_or(115_200)
 }
 
-pub fn get_client_uri_str() -> String {
+pub fn get_client_uri_str(settings) -> String {
     var("GRPC_CLIENT_ADDR").unwrap_or_else(|_| "https://127.0.0.1:50051".to_string())
 }
 

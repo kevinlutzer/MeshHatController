@@ -4,7 +4,7 @@ use crate::meshcore_proto::{
     mesh_core_service_client::MeshCoreServiceClient, send_message_request::Destination,
 };
 use clap::{Parser, Subcommand};
-use env::get_client_uri_str;
+use env::{load_env_file, get_client_uri_str};
 
 mod meshcore_proto {
     tonic::include_proto!("meshcore");
@@ -79,6 +79,7 @@ enum Commands {
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
+    load_env_file().await?;
     let addr_str = get_client_uri_str();
     let mut client: MeshCoreServiceClient<tonic::transport::Channel> =
         MeshCoreServiceClient::connect(addr_str).await?;
