@@ -69,7 +69,7 @@ jobs:
           snapcraft-channel: latest/edge
         
       - name: Upload snap build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snap-build-artifacts
           path: "*.snap"
@@ -102,7 +102,7 @@ jobs:
           snapcraft-channel: latest/edge
 
       - name: Upload snap build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snap-build-artifacts
           path: "*.snap"
