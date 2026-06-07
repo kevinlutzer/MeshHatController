@@ -14,10 +14,9 @@ use meshcore_rs::commands::CommandHandler;
 
 use crate::meshcore_proto::{
     GetInfoRequest, GetInfoResponse, ReceiveMessageRequest, ReceiveMessageResponse, ResetRequest,
-    ResetResponse, SendMessageRequest, SendMessageResponse,
+    ResetResponse, SendMessageRequest, SendMessageResponse, WatchMessagesRequest,
     mesh_core_service_server::MeshCoreService as MeshCoreServiceGrpc,
 };
-use crate::meshcore_proto::{WatchMessagesRequest, WatchMessagesResponse};
 use crate::server::message::{receive_message, send_message};
 
 pub struct MeshCoreService {
@@ -36,8 +35,7 @@ impl MeshCoreService {
 
 #[tonic::async_trait]
 impl MeshCoreServiceGrpc for MeshCoreService {
-
-    type WatchMessagesStream = ReceiverStream<Result<WatchMessagesResponse, Status>>;
+    type WatchMessagesStream = ReceiverStream<Result<ReceiveMessageResponse, Status>>;
 
     async fn receive_message(
         &self,
@@ -58,13 +56,7 @@ impl MeshCoreServiceGrpc for MeshCoreService {
         _request: tonic::Request<WatchMessagesRequest>,
     ) -> Result<tonic::Response<Self::WatchMessagesStream>, tonic::Status> {
         let (_tx, rx) = tokio::sync::mpsc::channel(128);
-
-        // Spawn a task to send messages into the channel
-        tokio::spawn(async move {
-            // TODO: your logic here — pull messages and send them
-            // e.g. tx.send(Ok(WatchMessagesResponse { ... })).await.unwrap();
-        });
-
+        message::watch_messages(&self.commands, _tx).await;
         Ok(Response::new(ReceiverStream::new(rx)))
     }
 

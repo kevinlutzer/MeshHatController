@@ -44,13 +44,13 @@ pub async fn create_contact(
     };
 
     let cmd = command.lock().await;
-    match cmd.add_contact(&contact).await {
-        Ok(()) => Ok(Response::new(CreateContactResponse {})),
-        Err(e) => {
+    cmd.add_contact(&contact)
+        .await
+        .map_err(|e| {
             error!(error = %e, "CreateContact failed");
-            Ok(Response::new(CreateContactResponse {}))
-        }
-    }
+            Status::internal("Failed to create contact")
+        })
+        .map(|_| Response::new(CreateContactResponse {}))
 }
 
 pub async fn search_contact(
@@ -60,11 +60,13 @@ pub async fn search_contact(
     let query = request.into_inner().query.to_lowercase();
     info!(query = %query, "SearchContact");
 
-    let cmd = command.lock().await;
-    let all_contacts = cmd
-        .get_contacts(0)
-        .await
-        .map_err(|e| Status::internal(e.to_string()))?;
+    // Grab the contacts in a narrow scope so we don't hold the lock while processing/filtering them.
+    let all_contacts = {
+        let cmd = command.lock().await;
+        cmd.get_contacts(0)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?
+    };
 
     // Grab **all** the contacts and then filter based
     // on the filtering criteria.
@@ -115,14 +117,11 @@ pub async fn delete_contact(
     info!(pubkey = %req.public_key_hex, "DeleteContact");
 
     let cmd = command.lock().await;
-    match cmd
-        .remove_contact(Destination::Hex(req.public_key_hex))
+    cmd.remove_contact(Destination::Hex(req.public_key_hex))
         .await
-    {
-        Ok(()) => Ok(Response::new(DeleteContactResponse {})),
-        Err(e) => {
+        .map(|_| Response::new(DeleteContactResponse {}))
+        .map_err(|e| {
             error!(error = %e, "DeleteContact failed");
-            Ok(Response::new(DeleteContactResponse {}))
-        }
-    }
+            Status::internal("Failed to delete contact")
+        })
 }

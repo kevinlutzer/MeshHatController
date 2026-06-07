@@ -1,8 +1,10 @@
-    use crate::meshcore_proto::{
-    CreateContactRequest, DeleteContactRequest, GetInfoRequest, ReceiveMessageRequest, ResetRequest, SearchContactRequest, SendMessageRequest, mesh_core_service_client::MeshCoreServiceClient, receive_message_response::Payload, send_message_request::Destination
+use crate::meshcore_proto::{
+    CreateContactRequest, DeleteContactRequest, GetInfoRequest, ReceiveMessageRequest,
+    ResetRequest, SearchContactRequest, SendMessageRequest,
+    mesh_core_service_client::MeshCoreServiceClient, receive_message_response::Payload,
+    send_message_request::Destination,
 };
 use clap::{Parser, Subcommand};
-use env::get_client_uri_str;
 use prost_types::Timestamp;
 
 mod meshcore_proto {
@@ -10,11 +12,13 @@ mod meshcore_proto {
 }
 
 #[derive(Parser)]
-#[command(name = "meshat-controller", version, about, long_about = None)]
+#[command(name = "meshcore-grpc-gateway-cli", version, about, long_about = None)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+    #[arg(long, default_value = "localhost:50051")]
+    host: String,
 }
 
 #[derive(Subcommand)]
@@ -78,15 +82,12 @@ enum Commands {
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let addr_str = get_client_uri_str();
     let mut client: MeshCoreServiceClient<tonic::transport::Channel> =
-        MeshCoreServiceClient::connect(addr_str).await?;
+        MeshCoreServiceClient::connect(format!("http://{}", cli.host)).await?;
 
     match cli.command {
         Commands::Reset {} => {
-            let _ = client.reset(ResetRequest {
-                hold_ms: None,
-            }).await?;
+            let _ = client.reset(ResetRequest { hold_ms: None }).await?;
             println!("Successfully reset the device");
         }
 
@@ -192,9 +193,12 @@ async fn main() -> anyhow::Result<()> {
                 .into_inner();
 
             match msg.payload {
-                Some(Payload::ContactMessage(cm)) => {  
+                Some(Payload::ContactMessage(cm)) => {
                     if !json {
-                        println!("Received contact message: [{}] {}", cm.sender_prefix_hex, cm.text);
+                        println!(
+                            "Received contact message: [{}] {}",
+                            cm.sender_prefix_hex, cm.text
+                        );
                     } else {
                         println!(
                             "{}",
@@ -204,10 +208,13 @@ async fn main() -> anyhow::Result<()> {
                             }))?
                         );
                     }
-                },
+                }
                 Some(Payload::ChannelMessage(cm)) => {
                     if !json {
-                        println!("Received channel message: [Channel {}] {}", cm.channel_index, cm.text);
+                        println!(
+                            "Received channel message: [Channel {}] {}",
+                            cm.channel_index, cm.text
+                        );
                     } else {
                         println!(
                             "{}",
@@ -217,7 +224,7 @@ async fn main() -> anyhow::Result<()> {
                             }))?
                         );
                     }
-                },
+                }
                 None => println!("No messages queued"),
             }
         }

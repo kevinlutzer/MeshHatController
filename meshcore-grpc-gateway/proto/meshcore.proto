@@ -43,13 +43,6 @@ message ReceiveMessageResponse {
 
 message WatchMessagesRequest {}
 
-message WatchMessagesResponse {
-  oneof payload {
-    ContactMessage contact_message = 1;
-    ChannelMessage channel_message = 2;
-  }
-}
-
 // A direct message from a known contact.
 message ContactMessage {
   string sender_prefix_hex = 1;  // 6-byte (12-char) hex prefix of sender pubkey
@@ -122,7 +115,9 @@ service MeshCoreService {
   // Polls for the next queued inbound message. Returns empty if no messages are waiting.
   rpc ReceiveMessage (ReceiveMessageRequest) returns (ReceiveMessageResponse);
   // Streams inbound messages as they arrive. Stays open indefinitely until client disconnects.
-  rpc WatchMessages   (WatchMessagesRequest)   returns (stream WatchMessagesResponse);
+  // Note: WatchMessages and ReceiveMessage are mutually exclusive; using one will prevent the other from receiving messages.
+  // WatchMessages is more efficient for real-time updates, while ReceiveMessage can be simpler for occasional polling.
+  rpc WatchMessages   (WatchMessagesRequest)   returns (stream ReceiveMessageResponse);
   // Pulses the radio module's controller reset GPIO LOW for hold_ms, then releases HIGH.
   rpc Reset          (ResetRequest)          returns (ResetResponse);
   // Creates a new contact with the given info. Public key must be unique; returns error if duplicate.
