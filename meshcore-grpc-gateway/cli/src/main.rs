@@ -1,10 +1,9 @@
     use crate::meshcore_proto::{
-    CreateContactRequest, DeleteContactRequest, GetInfoRequest, ReceiveMessageRequest,
-    ResetRequest, SearchContactRequest, SendMessageRequest, WatchMessagesRequest,
-    mesh_core_service_client::MeshCoreServiceClient, send_message_request::Destination,
+    CreateContactRequest, DeleteContactRequest, GetInfoRequest, ReceiveMessageRequest, ResetRequest, SearchContactRequest, SendMessageRequest, mesh_core_service_client::MeshCoreServiceClient, receive_message_response::Payload, send_message_request::Destination
 };
 use clap::{Parser, Subcommand};
 use env::get_client_uri_str;
+use prost_types::Timestamp;
 
 mod meshcore_proto {
     tonic::include_proto!("meshcore");
@@ -30,7 +29,7 @@ enum Commands {
     CreateContact {
         public_key_hex: String,
         name: String,
-        contact_type: u32,
+        contact_type: i32,
         flags: u32,
         latitude: f64,
         longitude: f64,
@@ -85,7 +84,9 @@ async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Reset {} => {
-            let _ = client.reset(ResetRequest {}).await?;
+            let _ = client.reset(ResetRequest {
+                hold_ms: None,
+            }).await?;
             println!("Successfully reset the device");
         }
 
@@ -169,11 +170,16 @@ async fn main() -> anyhow::Result<()> {
                 ),
             };
 
+            let sent_at = timestamp.map(|t| Timestamp {
+                seconds: t as i64,
+                nanos: 0,
+            });
+
             client
                 .send_message(SendMessageRequest {
                     destination: Some(destination),
                     text,
-                    timestamp,
+                    sent_at,
                 })
                 .await?;
             println!("Message sent successfully");
@@ -185,23 +191,34 @@ async fn main() -> anyhow::Result<()> {
                 .await?
                 .into_inner();
 
-            if json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&serde_json::json!({
-                        "has_message":    msg.has_message,
-                        "is_channel_msg": msg.is_channel_msg,
-                        "sender_hex":     msg.sender_hex,
-                        "channel_index":  msg.channel_index,
-                        "text":           msg.text,
-                    }))?
-                );
-            } else if !msg.has_message {
-                println!("No messages queued");
-            } else if msg.is_channel_msg {
-                println!("[Channel {}] {}", msg.channel_index, msg.text);
-            } else {
-                println!("[Contact {}] {}", msg.sender_hex, msg.text);
+            match msg.payload {
+                Some(Payload::ContactMessage(cm)) => {  
+                    if !json {
+                        println!("Received contact message: [{}] {}", cm.sender_prefix_hex, cm.text);
+                    } else {
+                        println!(
+                            "{}",
+                            serde_json::to_string_pretty(&serde_json::json!({
+                                "sender_hex": cm.sender_prefix_hex,
+                                "text":       cm.text,
+                            }))?
+                        );
+                    }
+                },
+                Some(Payload::ChannelMessage(cm)) => {
+                    if !json {
+                        println!("Received channel message: [Channel {}] {}", cm.channel_index, cm.text);
+                    } else {
+                        println!(
+                            "{}",
+                            serde_json::to_string_pretty(&serde_json::json!({
+                                "channel_index": cm.channel_index,
+                                "text":          cm.text,
+                            }))?
+                        );
+                    }
+                },
+                None => println!("No messages queued"),
             }
         }
     }

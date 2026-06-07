@@ -305,6 +305,7 @@ dependencies = [
  "clap_derive",
  "env",
  "prost 0.14.4",
+ "prost-types 0.14.4",
  "serde_json",
  "tokio",
  "tonic",
