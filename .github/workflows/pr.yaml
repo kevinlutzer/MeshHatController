@@ -28,15 +28,15 @@ jobs:
  
       - name: Check formatting
         run: cargo fmt --all -- --check
-        working-directory: ./meshhat-controller
+        working-directory: ./meshcore-grpc-gateway
     
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
-        working-directory: ./meshhat-controller
+        working-directory: ./meshcore-grpc-gateway
 
       - name: Build (release)
         run: cargo build --release --all-features
-        working-directory: ./meshhat-controller
+        working-directory: ./meshcore-grpc-gateway
 
       - name: Cache cargo registry & build artifacts
         uses: actions/cache@v4
