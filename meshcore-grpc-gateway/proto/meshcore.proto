@@ -41,7 +41,10 @@ message ReceiveMessageResponse {
   }
 }
 
-message WatchMessagesRequest {}
+message WatchMessagesRequest {
+  // If set, the server will check for new messages every polling_delay_ms instead of the default 100ms
+  optional uint64 polling_delay_ms = 1;
+}
 
 // A direct message from a known contact.
 message ContactMessage {

@@ -120,6 +120,7 @@ pub async fn send_message(
 pub async fn watch_messages(
     command: &Arc<Mutex<CommandHandler>>,
     tx: tokio::sync::mpsc::Sender<Result<ReceiveMessageResponse, Status>>,
+    polling_delay_ms: u64,
 ) {
     // Spawn a task to send messages into the channel
     let cloned_command = command.clone();
@@ -130,6 +131,10 @@ pub async fn watch_messages(
                     error!(error = %e, "Failed to send message to WatchMessages stream");
                 });
             }
+
+            // Add a delay to release the lock on the command handler and prevent
+            // a tight loop when there are no messages.
+            tokio::time::sleep(std::time::Duration::from_millis(polling_delay_ms)).await;
         }
     });
 }

@@ -53,10 +53,12 @@ impl MeshCoreServiceGrpc for MeshCoreService {
 
     async fn watch_messages(
         &self,
-        _request: tonic::Request<WatchMessagesRequest>,
+        request: tonic::Request<WatchMessagesRequest>,
     ) -> Result<tonic::Response<Self::WatchMessagesStream>, tonic::Status> {
+        let polling_delay_ms = request.into_inner().polling_delay_ms.unwrap_or(1000);
+
         let (_tx, rx) = tokio::sync::mpsc::channel(128);
-        message::watch_messages(&self.commands, _tx).await;
+        message::watch_messages(&self.commands, _tx, polling_delay_ms).await;
         Ok(Response::new(ReceiverStream::new(rx)))
     }
 

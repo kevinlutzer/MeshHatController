@@ -1,8 +1,8 @@
 use crate::meshcore_proto::{
     CreateContactRequest, DeleteContactRequest, GetInfoRequest, ReceiveMessageRequest,
-    ResetRequest, SearchContactRequest, SendMessageRequest,
-    mesh_core_service_client::MeshCoreServiceClient, receive_message_response::Payload,
-    send_message_request::Destination,
+    ReceiveMessageResponse, ResetRequest, SearchContactRequest, SendMessageRequest,
+    WatchMessagesRequest, mesh_core_service_client::MeshCoreServiceClient,
+    receive_message_response::Payload, send_message_request::Destination,
 };
 use clap::{Parser, Subcommand};
 use prost_types::Timestamp;
@@ -76,6 +76,47 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
+}
+
+/// Prints out the details of a recieved message in either a json or plain text format
+fn print_msg(msg: ReceiveMessageResponse, json: bool) -> Result<(), anyhow::Error> {
+    match msg.payload {
+        Some(Payload::ContactMessage(cm)) => {
+            if !json {
+                println!(
+                    "Received contact message: [{}] {}",
+                    cm.sender_prefix_hex, cm.text
+                );
+            } else {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "sender_hex": cm.sender_prefix_hex,
+                        "text":       cm.text,
+                    }))?
+                );
+            }
+        }
+        Some(Payload::ChannelMessage(cm)) => {
+            if !json {
+                println!(
+                    "Received channel message: [Channel {}] {}",
+                    cm.channel_index, cm.text
+                );
+            } else {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "channel_index": cm.channel_index,
+                        "text":          cm.text,
+                    }))?
+                );
+            }
+        }
+        None => println!("No messages queued"),
+    }
+
+    Ok(())
 }
 
 #[tokio::main]
@@ -192,41 +233,7 @@ async fn main() -> anyhow::Result<()> {
                 .await?
                 .into_inner();
 
-            match msg.payload {
-                Some(Payload::ContactMessage(cm)) => {
-                    if !json {
-                        println!(
-                            "Received contact message: [{}] {}",
-                            cm.sender_prefix_hex, cm.text
-                        );
-                    } else {
-                        println!(
-                            "{}",
-                            serde_json::to_string_pretty(&serde_json::json!({
-                                "sender_hex": cm.sender_prefix_hex,
-                                "text":       cm.text,
-                            }))?
-                        );
-                    }
-                }
-                Some(Payload::ChannelMessage(cm)) => {
-                    if !json {
-                        println!(
-                            "Received channel message: [Channel {}] {}",
-                            cm.channel_index, cm.text
-                        );
-                    } else {
-                        println!(
-                            "{}",
-                            serde_json::to_string_pretty(&serde_json::json!({
-                                "channel_index": cm.channel_index,
-                                "text":          cm.text,
-                            }))?
-                        );
-                    }
-                }
-                None => println!("No messages queued"),
-            }
+            print_msg(msg, json)?;
         }
     }
 
