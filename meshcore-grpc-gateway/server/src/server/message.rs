@@ -6,6 +6,7 @@ use meshcore_rs::{
     commands::{CommandHandler, Destination},
 };
 
+use tokio_util::sync::CancellationToken;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 use tracing::{debug, error, info};
@@ -86,9 +87,8 @@ pub async fn send_message(
     request: Request<SendMessageRequest>,
 ) -> Result<Response<SendMessageResponse>, Status> {
     let req = request.into_inner();
-    let text = &req.text;
 
-    // Convert thei
+    let text = &req.text;
     let timestamp = req.sent_at.map(|d| d.seconds as u32);
 
     let result = {
@@ -121,20 +121,28 @@ pub async fn watch_messages(
     command: &Arc<Mutex<CommandHandler>>,
     tx: tokio::sync::mpsc::Sender<Result<ReceiveMessageResponse, Status>>,
     polling_delay_ms: u64,
+    token: CancellationToken
 ) {
-    // Spawn a task to send messages into the channel
     let cloned_command = command.clone();
+    
     tokio::spawn(async move {
         loop {
-            if let Ok(msg) = poll_message(&cloned_command).await {
-                tx.send(Ok(msg)).await.unwrap_or_else(|e| {
-                    error!(error = %e, "Failed to send message to WatchMessages stream");
-                });
+            tokio::select! {
+                // _ = token.cancelled() => {
+                //     info!("WatchMessages task cancelled");
+                //     break;
+                // }
+                _ = tokio::time::sleep(
+                    std::time::Duration::from_millis(polling_delay_ms)
+                ) => {
+                    if let Ok(msg) = poll_message(&cloned_command).await {
+                        if tx.send(Ok(msg)).await.is_err() {
+                            // Client disconnected
+                            break;
+                        }
+                    }
+                }
             }
-
-            // Add a delay to release the lock on the command handler and prevent
-            // a tight loop when there are no messages.
-            tokio::time::sleep(std::time::Duration::from_millis(polling_delay_ms)).await;
         }
     });
 }
