@@ -4,8 +4,8 @@ version: 1.0.0
 summary: gRPC server bridging MeshCore radio nodes over serial
 description: |
   Exposes a gRPC interface (SendMessage, ReceiveMessage, Reset,
-  CreateContact, SearchContact, DeleteContact, Health check) backed by
-  a MeshCore companion radio node connected via serial port.
+  CreateContact, SearchContact, DeleteContact, etc) backed by
+  a MeshCore companion radio node connected via the USB serial port.
 source-code: https://github.com/kevinlutzer/MeshCoreGRPCGateway
 website: https://github.com/kevinlutzer/MeshCoreGRPCGateway
 license: Apache-2.0

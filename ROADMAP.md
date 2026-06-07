@@ -17,11 +17,13 @@ This document outlines the current state and planned features for the MeshCoreGR
 
 ### Configuration Support via Snapd
 
-Implement
+Implement a configure hook that will be used in junction with snapd's configure APIs
+ to change the configuration of the server 
 
 ### Remote DFU (Device Firmware Update)
 
-Implement Device Firmware Update capabilities firmware updates for MeshCore devices without requiring physical access to the hardware.
+Implement Device Firmware Update capabilities firmware updates for MeshCore devices without
+ requiring physical access to the hardware.
 
 **Goals:**
 

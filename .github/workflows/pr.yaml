@@ -48,8 +48,8 @@ jobs:
             ${{ runner.os }}-cargo-clippy-
             ${{ runner.os }}-cargo-
 
-  snap:
-    name: Snap build (LXD)
+  snap-arm64:
+    name: Snap build (LXD) ARM64
     runs-on: ubuntu-24.04-arm
     needs: [fmt-lint-build]
     steps:
@@ -71,5 +71,31 @@ jobs:
       - name: Upload snap build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: snap-build-artifacts
+          name: snap-build-artifacts-arm64
+          path: "*.snap"
+
+  snap-amd64:
+    name: Snap build (LXD) AMD64
+    runs-on: ubuntu-24.04
+    needs: [fmt-lint-build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update version with build ID
+        run: |
+            current=$(grep -oP "^version: '?\K[^'\s]+" snap/snapcraft.yaml | sed 's/-alpha.*//')
+            sed -i "s/^version:.*/version: '${current}-alpha.${{ github.run_number }}'/" snap/snapcraft.yaml
+
+      # snapcraft needs LXD; the canonical action wires everything up:
+      # installs snapcraft, initialises LXD, and sets the build provider.
+      - name: Install Snapcraft
+        uses: snapcore/action-build@v1
+        id: snap-build
+        with:
+          snapcraft-channel: latest/edge
+
+      - name: Upload snap build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-build-artifacts-amd64
           path: "*.snap"

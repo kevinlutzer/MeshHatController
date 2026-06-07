@@ -13,7 +13,7 @@ const ENV_FILE_NAME: &str = "settings.ini";
 /// Snap specific directory that the service will have access too
 const SNAP_COMMON: &str = "SNAP_COMMON";
 /// Default environment settings. These can be manipulated by editing the settings.ini
-const DEFAULT_SETTINGS: &str = "GRPC_CLIENT_ADDR=https://127.0.0.1:50051\nMESHCORE_BAUD_RATE=115200\nGRPC_LISTEN_ADDR=[::]:50051\nMESHCORE_SERIAL_PORT=/dev/ttyAMA0\n";
+const DEFAULT_SETTINGS: &str = "MESHCORE_BAUD_RATE=115200\nMESHCORE_SERIAL_PORT=/dev/ttyAMA0\nGRPC_LISTEN_ADDR=[::]:50051\n";
 
 /// Gets the settings directory for the service.
 /// - For a snap this is the $SNAP_COMMON
@@ -86,16 +86,8 @@ pub fn get_baud_rate() -> u32 {
         .unwrap_or(115_200)
 }
 
-pub fn get_client_uri_str() -> String {
-    var("GRPC_CLIENT_ADDR").unwrap_or_else(|_| "https://127.0.0.1:50051".to_string())
-}
-
-pub fn get_addr_str() -> String {
-    var("GRPC_LISTEN_ADDR").unwrap_or_else(|_| "[::]:50051".to_string())
-}
-
 pub fn get_addr() -> anyhow::Result<SocketAddr> {
-    let addr_str = get_addr_str();
+    let addr_str = var("GRPC_LISTEN_ADDR").unwrap_or_else(|_| "[::]:50051".to_string());
     addr_str
         .parse::<std::net::SocketAddr>()
         .with_context(|| format!("Failed to parse GRPC_LISTEN_ADDR: {}", addr_str))

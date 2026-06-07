@@ -1,7 +1,7 @@
 use crate::meshcore_proto::{
     CreateContactRequest, DeleteContactRequest, GetInfoRequest, ReceiveMessageRequest,
     ReceiveMessageResponse, ResetRequest, SearchContactRequest, SendMessageRequest,
-    WatchMessagesRequest, mesh_core_service_client::MeshCoreServiceClient,
+    mesh_core_service_client::MeshCoreServiceClient,
     receive_message_response::Payload, send_message_request::Destination,
 };
 use clap::{Parser, Subcommand};
