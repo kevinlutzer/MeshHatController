@@ -1,9 +1,8 @@
-set dotenv-filename := ".env.just"
-project_name := "meshhat-controller"
-remote_user:= "ubuntu"
-remote_host:= "10.0.0.7"
+project_name := "meshcore-grpc-gateway"
 
-remote-snap:
+# Builds this project and creates a snap package in the current working directory
+# Using a remote machine with snapcraft and LXD installed. See README.md for more information.
+remote-snap remote_user="" remote_host="":
     #!/usr/bin/env bash
     set -euo pipefail
 
