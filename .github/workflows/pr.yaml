@@ -57,8 +57,14 @@ jobs:
  
       # snapcraft needs LXD; the canonical action wires everything up:
       # installs snapcraft, initialises LXD, and sets the build provider.
-      - name: Install Snapcraft
+      - name: Snap build
         uses: snapcore/action-build@v1
         id: snap-build
         with:
           snapcraft-channel: latest/edge
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: snap-build-artifacts
+          path: *.snap
