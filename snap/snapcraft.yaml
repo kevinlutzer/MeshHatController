@@ -1,6 +1,6 @@
 name: meshcore-grpc-gateway
 base: core24
-version: "1.0.0"
+version: 1.0.0
 summary: gRPC server bridging MeshCore radio nodes over serial
 description: |
   Exposes a gRPC interface (SendMessage, ReceiveMessage, Reset,
@@ -12,12 +12,6 @@ license: Apache-2.0
 
 grade: stable
 confinement: strict
-
-architectures:
-  - build-on: [amd64]
-    build-for: [amd64]
-  - build-on: [arm64]
-    build-for: [arm64]
 
 apps:
   cli:
