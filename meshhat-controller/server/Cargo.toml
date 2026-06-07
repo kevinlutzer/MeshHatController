@@ -2,9 +2,10 @@
 name = "server"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.93.0"
 
 [dependencies]
-meshcore-rs        = "0.1"
+meshcore-rs        = "0.1.10"
 anyhow = "1.0.102"
 clap = { version = "4.6.1", features = ["derive"] }
 clap_derive = "4.6.1"

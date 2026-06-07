@@ -23,7 +23,7 @@ enum Commands {
     /// Resets the device
     Reset {},
 
-    /// Gets the name of the device
+    /// Prints the name of the device
     GetName {},
 
     /// Creates a contact
@@ -39,7 +39,7 @@ enum Commands {
     /// Deletes a contact with a specific hash
     DeleteContact { public_key_hex: String },
 
-    /// Search a contact
+    /// Search for a specific contact. This will match based on name or public key hex.
     SearchContact {
         /// Criteria to search on
         query: String,

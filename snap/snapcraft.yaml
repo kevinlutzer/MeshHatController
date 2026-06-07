@@ -1,11 +1,14 @@
 name: meshhat-controller
-base: core26
-version: "1.0.0-pr"
+base: core24
+version: "1.0.0"
 summary: gRPC server bridging MeshCore radio nodes over serial
 description: |
   Exposes a gRPC interface (SendMessage, ReceiveMessage, Reset,
   CreateContact, SearchContact, DeleteContact, Health check) backed by
   a MeshCore companion radio node connected via serial port.
+source-code: https://github.com/kevinlutzer/MeshHatController
+website: https://github.com/kevinlutzer/MeshHatController
+license: Apache-2.0
 
 grade: stable
 confinement: strict
