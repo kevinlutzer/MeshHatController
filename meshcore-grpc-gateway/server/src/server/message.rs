@@ -36,7 +36,7 @@ pub async fn poll_message(
     match event.event_type {
         EventType::ContactMsgRecv => {
             if let EventPayload::ContactMessage(msg) = event.payload {
-                info!(sender = %hex::encode(msg.sender_prefix), "Received contact messasge");
+                info!(sender = %hex::encode(msg.sender_prefix), "Received contact message");
                 Ok(ReceiveMessageResponse {
                     payload: Some(Payload::ContactMessage(ContactMessage {
                         sender_prefix_hex: hex::encode(msg.sender_prefix),
@@ -50,7 +50,7 @@ pub async fn poll_message(
         }
         EventType::ChannelMsgRecv => {
             if let EventPayload::ChannelMessage(msg) = event.payload {
-                info!(channel = msg.channel_idx, "Received channel messasge");
+                info!(channel = msg.channel_idx, "Received channel message");
                 Ok(ReceiveMessageResponse {
                     payload: Some(Payload::ChannelMessage(ChannelMessage {
                         channel_index: msg.channel_idx as u32,

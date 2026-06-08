@@ -95,6 +95,9 @@ pub async fn search_contact(
                 public_key_hex: c.public_key_hex(),
                 prefix_hex: c.prefix_hex(),
                 name: c.adv_name.clone(),
+
+                // There are only three different types of contacts
+                // so this cast is safe
                 contact_type: c.contact_type as i32,
                 flags: c.flags as u32,
                 latitude: c.latitude(),
